@@ -1,7 +1,7 @@
 import logging
 import pprint
 import json
-import os
+import os, sys
 
 import httplib2
 from apiclient.discovery import build
@@ -10,7 +10,7 @@ from googleapiclient.errors import HttpError
 
 from secret import GOOGLE_PRIVATE_KEY_FILE, GOOGLE_DEVELOPER_PROJECT_ID, GOOGLE_DEVELOPER_PROJECT_NUMBER, GOOGLE_SERVICE_EMAIL
 
-from census_schema import demo_schema 
+from census_schema import demo_schema, group_schema, family_schema, income_schema
 
 class GoogleBigQueryClient():
     """
@@ -77,6 +77,7 @@ def loadTable(service, projectId, datasetId, targetTableId, sourceCSV, tableSche
     while True:
       job = jobCollection.get(projectId=projectId,
                                  jobId=insertResponse['jobReference']['jobId']).execute()
+      print(job)
       if 'DONE' == job['status']['state']:
           print 'Done Loading!'
           return
@@ -89,10 +90,14 @@ def loadTable(service, projectId, datasetId, targetTableId, sourceCSV, tableSche
   except HttpError as err:
     print 'Error in loadTable: ', pprint.pprint(err.resp)
 
+
 def main():
   client = GoogleBigQueryClient()
   # client.test_access()
   # loadTable(client.client, GOOGLE_DEVELOPER_PROJECT_ID, "new_jersey", "new_jersey_demo", "gs://demographic-data/NewJerseyQuery.csv", demo_schema)
+  # loadTable(client.client, GOOGLE_DEVELOPER_PROJECT_ID, "new_jersey", "new_jersey_group", "gs://groupquarter-data/NewJerseyGQuery.txt", group_schema)
+  # loadTable(client.client, GOOGLE_DEVELOPER_PROJECT_ID, "new_jersey", "new_jersey_family", "gs://family-data/NewJerseyFQuery.txt", family_schema)
+  loadTable(client.client, GOOGLE_DEVELOPER_PROJECT_ID, "new_jersey", "new_jersey_income", "gs://income-data/NewJerseyIncome.csv", income_schema)
 
 if __name__ == "__main__":
     main()
