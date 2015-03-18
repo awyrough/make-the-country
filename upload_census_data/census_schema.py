@@ -694,7 +694,7 @@ family_schema = [
 income_schema = [
                 {'name': 'GEO_id', 'type': 'STRING'},
                 {'name': 'GEO_id2', 'type': 'STRING'},
-                {'name': 'GEO_display_label', 'type': 'STRING'},
+                {'name': 'GEO_display_ label', 'type': 'STRING'},
                 {'name': 'HC01_EST_VC01', 'type': 'STRING'},
                 {'name': 'HC01_MOE_VC01', 'type': 'STRING'},
                 {'name': 'HC02_EST_VC01', 'type': 'STRING'},
