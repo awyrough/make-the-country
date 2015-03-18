@@ -1,15 +1,22 @@
-import logging
-import pprint
-import json
-import os, sys
+"""
+BigQuery Client for Recreating US Census Data, census block by census block.
 
-import httplib2
+Alexander Penn Hill Wyrough
+3/17/2015
+
+https://github.com/awyrough/make-the-country
+"""
+
+# SYSTEM IMPORTS
+import logging, os, httplib2
+# GOOGLE IMPORTS
 from apiclient.discovery import build
 from oauth2client.client import SignedJwtAssertionCredentials
 from googleapiclient.errors import HttpError
+# SECRET IMPORTS
+from secret import GOOGLE_PRIVATE_KEY_FILE, GOOGLE_DEVELOPER_PROJECT_NUMBER, GOOGLE_SERVICE_EMAIL
 
-from secret import GOOGLE_PRIVATE_KEY_FILE, GOOGLE_DEVELOPER_PROJECT_ID, GOOGLE_DEVELOPER_PROJECT_NUMBER, GOOGLE_SERVICE_EMAIL
-
+# LOGGING DECLARATION
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="%(levelname)s %(filename)s: %(message)s",
                     level=logging.INFO)
@@ -49,29 +56,10 @@ class GoogleBigQueryClient():
         for d in response['datasets']:
             print("%s\n" % d['id'])
 
-    def get_query_string(self, db, state, county, tract):
+    def run_query(self, query_str):
         """
-        Return query string for given database and state. 
+        Execute query_str and return results as list of lists.
         """
-        tract_query = "SELECT * FROM [%s.%s_%s] WHERE TRACT IN (\"%s\") AND COUNTY IN (\"%s\")" % (state, state, db, tract, county)
-        return tract_query
-
-    def get_income_query(self, state, county, tract):
-        """
-        Return query string for income database of state.
-        """
-        income_query = "SELECT * FROM [%s.%s_income] WHERE GEO_id2 LIKE \"%%%s%s\"" % (state, state, county, tract)
-        print(income_query)
-        return income_query
-
-    def get_tract(self, db_type, county_id, tract_id, state_name):
-        """
-        Return all rows from DEMO data base of state, corresponding to tract_id and state_id.
-        """
-        if db_type != "income":
-            query_str = self.get_query_string(db_type, state_name, county_id, tract_id)
-        else:
-            query_str = self.get_income_query(state_name, county_id, tract_id)
         query_body = {'query': query_str}
 
         # EXECUTE THE QUERY, KICK OFF JOB
@@ -102,7 +90,8 @@ class GoogleBigQueryClient():
             "jobId": jobId,
             "maxResults": 1000, #ARBITRARY
         }
-        census_results = []
+
+        data_results = []
         while True:
             try:
                 results = self.client.jobs().getQueryResults(**getQueryResultsParams).execute()
@@ -111,15 +100,50 @@ class GoogleBigQueryClient():
                 return []
 
             try:
-                [census_results.append(row) for row in results["rows"]]
+                [data_results.append(row) for row in results["rows"]]
             except KeyError:
                 logger.error("[No rows returned]")
                 break
 
-            if 'pageToken' in results: getQueryResultsParams = results["pageToken"]
+            if 'pageToken' in results: getQueryResultsParams["pageToken"] = results["pageToken"]
             else: break
 
-        return census_results
+        return data_results
+
+    def get_query_string(self, db, state, county, tract):
+        """
+        Return query string for given database and state. 
+        """
+        tract_query = "SELECT * FROM [%s.%s_%s] WHERE TRACT IN (\"%s\") AND COUNTY IN (\"%s\")" % (state, state, db, tract, county)
+        return tract_query
+
+    def get_income_query(self, state, county, tract):
+        """
+        Return query string for income database of state.
+        """
+        income_query = "SELECT * FROM [%s.%s_income] WHERE GEO_id2 LIKE \"%%%s%s\"" % (state, state, county, tract)
+        return income_query
+
+    def get_tract_data(self, db_type, county_id, tract_id, state_name):
+        """
+        Return all rows from DEMO data base of state, corresponding to tract_id and state_id.
+        """
+        if db_type != "income":
+            query_str = self.get_query_string(db_type, state_name, county_id, tract_id)
+        else:
+            query_str = self.get_income_query(state_name, county_id, tract_id)
+        return self.run_query(query_str)
+
+    def get_all_tracts_in_county(self, state, county):
+        """
+        Return a list of strings for all tracts within the county within the state.
+
+        Note: BigQuery does support DISTINCT, must use GROUP BY
+        """
+        query_str = "SELECT TRACT FROM [%s.%s_demo] WHERE COUNTY IN (\"%s\") GROUP BY TRACT ORDER BY TRACT ASC" % (state, state, county)
+        # Extract only the TRACT ID from the field: value = census tract
+        # EX: [{"f": [{"v": "000100"}]}, ... ]
+        return [x["f"][0]["v"] for x in self.run_query(query_str)]
 
 def get_demo_data(state, county, tract):
     """
@@ -129,7 +153,7 @@ def get_demo_data(state, county, tract):
     This should return an identical number of rows for corresponding group/family queries.
     """
     client = GoogleBigQueryClient()
-    demo = client.get_tract("demo", county, tract, state)
+    demo = client.get_tract_data("demo", county, tract, state)
     return demo
 
 def get_group_data(state, county, tract):
@@ -140,7 +164,7 @@ def get_group_data(state, county, tract):
     This should return an identical number of rows for corresponding demo/family queries.
     """
     client = GoogleBigQueryClient()
-    group = client.get_tract("group", county, tract, state)
+    group = client.get_tract_data("group", county, tract, state)
     return group
 
 def get_family_data(state, county, tract):
@@ -151,7 +175,7 @@ def get_family_data(state, county, tract):
     This should return an identical number of rows for corresponding demo/group queries.
     """
     client = GoogleBigQueryClient()
-    family = client.get_tract("family", county, tract, state)
+    family = client.get_tract_data("family", county, tract, state)
     return family
 
 def get_income_data(state, county, tract):
@@ -161,11 +185,13 @@ def get_income_data(state, county, tract):
     This should return 1 row/list of data.
     """
     client = GoogleBigQueryClient()
-    income = client.get_tract("income", county, tract, state)
+    income = client.get_tract_data("income", county, tract, state)
     return income
 
-def main():
-    pass
-
-if __name__=="__main__":
-    main()
+def get_all_tracts(state, county):
+    """
+    Return all tracts within a county.
+    """
+    client = GoogleBigQueryClient()
+    tracts = client.get_all_tracts_in_county(state, county)
+    return tracts
