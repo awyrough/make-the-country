@@ -19,7 +19,7 @@ from secret import GOOGLE_PRIVATE_KEY_FILE, GOOGLE_DEVELOPER_PROJECT_NUMBER, GOO
 # LOGGING DECLARATION
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="%(levelname)s %(filename)s: %(message)s",
-                    level=logging.INFO)
+                    level=logging.WARNING)
 
 class GoogleBigQueryClient():
     """
@@ -140,10 +140,23 @@ class GoogleBigQueryClient():
 
         Note: BigQuery does support DISTINCT, must use GROUP BY
         """
-        query_str = "SELECT TRACT FROM [%s.%s_demo] WHERE COUNTY IN (\"%s\") GROUP BY TRACT ORDER BY TRACT ASC" % (state, state, county)
+        if county:
+            query_str = "SELECT TRACT FROM [%s.%s_demo] WHERE COUNTY IN (\"%s\") GROUP BY TRACT ORDER BY TRACT ASC" % (state, state, county)
+        else:
+            query_str = "SELECT TRACT FROM [%s.%s_demo] GROUP BY TRACT ORDER BY TRACT ASC" % (state, state)                        
         # Extract only the TRACT ID from the field: value = census tract
         # EX: [{"f": [{"v": "000100"}]}, ... ]
         return [x["f"][0]["v"] for x in self.run_query(query_str)]
+
+    def get_counties_in_state(self, state):
+        """
+        Return a list of strings for all counties within the state.
+        """
+        query_str = "SELECT COUNTY FROM [%s.%s_demo] GROUP BY COUNTY ORDER BY COUNTY ASC" % (state, state)
+        return [x["f"][0]["v"] for x in self.run_query(query_str)]        
+
+def unpack_bigquery_row(data):
+    return [x["v"] for x in data["f"]]
 
 def get_demo_data(state, county, tract):
     """
@@ -195,3 +208,11 @@ def get_all_tracts(state, county):
     client = GoogleBigQueryClient()
     tracts = client.get_all_tracts_in_county(state, county)
     return tracts
+
+def get_all_counties(state):
+    """
+    Return all counties within a state.
+    """
+    client = GoogleBigQueryClient()
+    counties = client.get_counties_in_state(state)
+    return counties

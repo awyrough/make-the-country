@@ -102,5 +102,11 @@ def display_stop():
                 "----------------------------------------------------\n"
     print(message)
 
+def display_county(county):
+    """
+    Display to user that you are beginning work on county
+    """
+    pass
+
 def fix_state_name(state):
     return "_".join(state.lower().split(" "))

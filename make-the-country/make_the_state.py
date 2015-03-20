@@ -1,7 +1,7 @@
 import sys, argparse
 
-from population_client import get_all_tracts, get_demo_data, get_group_data, get_family_data, get_income_data
-from maker_helpers import confirm_execution, display_stop, display_start
+from population_client import get_all_tracts, get_all_counties, get_demo_data, get_group_data, get_family_data, get_income_data, unpack_bigquery_row
+from maker_helpers import confirm_execution, display_stop, display_start, display_county
 from maker_helpers import fix_state_name
 
 def make_the_state(state, county, output=True):
@@ -19,26 +19,40 @@ def make_the_state(state, county, output=True):
     internal_state = fix_state_name(state)
 
     # Get all the tracts for the state/county entity
-    tracts = get_all_tracts(internal_state, county)
+    if not county:
+        counties = get_all_counties(internal_state)
+    else:
+        counties = [county]
 
-    # need a way to iterate through countties when whole state is specified
+    for county in counties:
+        display_county(county)
+        tracts = get_all_tracts(internal_state, county)
+        # Iterate over all tracts in the state/county
+        for tract in tracts:
+            # Get income data for tract
+            income = get_income_data(internal_state, county, tract)
+            income_data = unpack_bigquery_row(income[0])
+            # Collect data for  tract
+            demo = get_demo_data(internal_state, county, tract)
+            group = get_group_data(internal_state, county, tract)
+            family = get_group_data(internal_state, county, tract)
+            for i in range(len(demo)):
+                demo_row = unpack_bigquery_row(demo[i])
+                group_row = unpack_bigquery_row(demo[i])
+                family_row = unpack_bigquery_row(demo[i])
+                
+                # build census block
 
-    next = True
-    # Iterate over all tracts in the state/county
-    for tract in tracts:
-        # Get associated data for the tract
-        income = get_income_data(internal_state, county, tract)
-        demo = get_demo_data(internal_state, county, tract)
-        group = get_group_data(internal_state, county, tract)
-        family = get_group_data(internal_state, county, tract)
-        for i, x in enumerate(len(demo)):
-            row_demo = demo[i]
-            row_group = group[i]
-            row_family = family[i]
-            print(row_demo)
-            print(row_group)
-            print(row_family)
+                break
+            break
+        log_progress()
+        break
 
+def log_progress():
+    """
+    Log progress if qualified
+    """
+    pass
 
 def get_make_the_state_input():
     print("[INPUT]: What state are you trying to make?")
