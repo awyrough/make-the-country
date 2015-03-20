@@ -19,20 +19,26 @@ def make_the_state(state, county, output=True):
     internal_state = fix_state_name(state)
 
     # Get all the tracts for the state/county entity
+    tracts = get_all_tracts(internal_state, county)
 
+    # need a way to iterate through countties when whole state is specified
+
+    next = True
     # Iterate over all tracts in the state/county
-
+    for tract in tracts:
         # Get associated data for the tract
-            # income
-            # demo
-            # group
+        income = get_income_data(internal_state, county, tract)
+        demo = get_demo_data(internal_state, county, tract)
+        group = get_group_data(internal_state, county, tract)
+        family = get_group_data(internal_state, county, tract)
+        for i, x in enumerate(len(demo)):
+            row_demo = demo[i]
+            row_group = group[i]
+            row_family = family[i]
+            print(row_demo)
+            print(row_group)
+            print(row_family)
 
-        # iterate over each census block in the census tract
-            # income remains constant
-            # chug through demo, group, family
-
-        # get next tract
-            # update income data
 
 def get_make_the_state_input():
     print("[INPUT]: What state are you trying to make?")
