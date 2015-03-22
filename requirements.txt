@@ -1,5 +1,6 @@
 google-api-python-client==1.4.0
 httplib2==0.9
+numpy==1.9.2
 oauth2client==1.4.6
 pyasn1==0.1.7
 pyasn1-modules==0.0.5

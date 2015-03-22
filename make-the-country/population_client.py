@@ -77,6 +77,8 @@ class GoogleBigQueryClient():
             jobComplete = response['jobComplete']
         except KeyError as e:
             logger.error("[The result didn't return anything]: ERROR: %s", e) 
+            print(response)
+            return []
 
         # ACCESS THE JOB OF THE QUERY, TO POLL FOR RESULTS
         try:
@@ -155,8 +157,75 @@ class GoogleBigQueryClient():
         query_str = "SELECT COUNTY FROM [%s.%s_demo] GROUP BY COUNTY ORDER BY COUNTY ASC" % (state, state)
         return [x["f"][0]["v"] for x in self.run_query(query_str)]        
 
-def unpack_bigquery_row(data):
-    return [x["v"] for x in data["f"]]
+    def get_demo_data(self, state, county, tract):
+        """
+        Get all Census data for given state, county, and tract. 
+
+        This should return a row for every census block within the tract/county/state combo.
+        This should return an identical number of rows for corresponding group/family queries.
+        """
+        demo = self.get_tract_data("demo", county, tract, state)
+        return demo
+
+    def get_group_data(self, state, county, tract):
+        """
+        Get group data for a given state, county, and tract.
+
+        This should return a row for every census block within the tract/county/state combo.
+        This should return an identical number of rows for corresponding demo/family queries.
+        """
+        group = self.get_tract_data("group", county, tract, state)
+        return group
+
+    def get_family_data(self, state, county, tract):
+        """
+        Get family data for a given state, county, and tract.
+
+        This should return a row for every census block within the tract/county/state combo.
+        This should return an identical number of rows for corresponding demo/group queries.
+        """
+        family = self.get_tract_data("family", county, tract, state)
+        return family
+
+    def get_income_data(self, state, county, tract):
+        """
+        Get income data for a given state, county, and tract.
+
+        This should return 1 row/list of data.
+        """
+        income = self.get_tract_data("income", county, tract, state)
+        return income
+
+    def get_all_tracts(self, state, county):
+        """
+        Return all tracts within a county.
+        """
+        tracts = self.get_all_tracts_in_county(state, county)
+        return tracts
+
+    def get_all_counties(self, state):
+        """
+        Return all counties within a state.
+        """
+        counties = self.get_counties_in_state(state)
+        return counties
+
+    def get_population_count(self, state, county):
+        """
+        Return the population in a given county.
+        """
+        query_str = "SELECT SUM(POP100) FROM [%s.%s_demo] WHERE COUNTY IN (\"%s\")" % (state, state, county)
+        return int(self.run_query(query_str)[0]["f"][0]["v"])
+
+#################################################################################################
+"""
+Below are standalone methods that do not require the use of a Google BigQuery client.
+
+Cleaner methods that are more simpler, better for one off.
+
+My attempt at overloading.
+"""
+################################################################################################# 
 
 def get_demo_data(state, county, tract):
     """
@@ -216,3 +285,6 @@ def get_all_counties(state):
     client = GoogleBigQueryClient()
     counties = client.get_counties_in_state(state)
     return counties
+
+def unpack_bigquery_row(data):
+    return [x["v"] for x in data["f"]]

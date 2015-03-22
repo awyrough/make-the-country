@@ -1,6 +1,11 @@
 """
 User interaction and printing helpers for make_the_state.py
 """
+import json
+import string
+import random
+import csv
+from population_client import GoogleBigQueryClient
 
 def confirm_output(state, country, output):
     """
@@ -102,11 +107,67 @@ def display_stop():
                 "----------------------------------------------------\n"
     print(message)
 
-def display_county(county):
+def display_county(session, state, county):
     """
     Display to user that you are beginning work on county
     """
-    pass
+    county_pop = session.get_population_count(state, county)
+    message = "" \
+                "----------------------------------------------------\n" \
+                "* Beginning work on county: %s                      \n" \
+                "* There are %d residents in the state.              \n" \
+                "----------------------------------------------------\n" % (county, county_pop)
+    print(message)
+    return county_pop
+
+def find_county(state, county):
+    """
+    Return county FIPS code for given county name in state.
+    """
+    state_county_file = open(("county_dictionaries/%s.json" % fix_state_name(state)), "r")
+    state_county_dict = json.load(state_county_file)
+    try:
+        return state_county_dict["counties"][county]
+    except KeyError:
+        return None
 
 def fix_state_name(state):
+    """
+    Convert "State Name" to "state_name"
+    Convert "State to state"
+    """
     return "_".join(state.lower().split(" "))
+
+def make_random_file_name(state, county, size=6, chars=string.ascii_uppercase + string.digits):
+    """
+    Make and return random file name for output.
+    "output/state + RANDOM STRING + COUNTY
+    """
+    file_str = "output/" + state + "_" + ''.join(random.choice(chars) for _ in range(size))
+    if county:
+        file_str += ("_" + "_".join(county.lower().split(" ")))
+    return file_str + ".csv"
+
+def display_local_output(filename):
+    """
+    Tell user where the local output will be
+    """
+    message = "" \
+                "----------------------------------------------------\n" \
+                "* OUTPUT                                            \n" \
+                "* The results will be located in the Output folder  \n" \
+                "* The filename is %s                                \n" \
+                "* I will remind you at the end...                   \n" \
+                "----------------------------------------------------\n" % (filename)
+    print(message) 
+
+def output_block(block, output=True, fileobj=None, db_table=None):
+    """
+    Write output
+    """
+    if output:
+        open_file = csv.writer(fileobj, delimiter=",")
+        for b in block:
+            open_file.writerow(b)
+    else:
+        print("no output happening")
