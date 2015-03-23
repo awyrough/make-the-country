@@ -17,6 +17,7 @@ def make_the_state(state, county, output=True, county_code=None):
     output, when set to false, will write the data to a GoogleBigQuery data table for download and querying. 
     Default is to create a local CSV file. 
     """
+    if state != "New Jersey": print("only NJ for now"); display_stop(); exit()
     # Validate Use
     confirm = confirm_execution(state, county, output)
     if not confirm: display_stop(); exit()
@@ -123,14 +124,13 @@ def get_make_the_state_input():
 
 def main():
     parser = argparse.ArgumentParser(description="Make the state simulations")
-    parser.add_argument('--interactive', metavar='I', dest="run", type=bool, default=True, help="a flag for interactive process")
-    parser.add_argument('--state', metavar="S", dest="state", type=str, help="the state")
-    parser.add_argument('--county', metavar="C", dest="county", type=str, help="the county")
-    parser.add_argument('--output', metavar="O", dest="output", type=bool, default=True, help="the output")
+    parser.add_argument('--interactive', dest="run", action="store_true", help="run an interactive prompt")
+    parser.add_argument('--bigquery-output', dest="output", action="store_false", help="put the output into big query")
+    parser.add_argument('--state', metavar="S", dest="state", help="the state")
+    parser.add_argument('--county', metavar="C", dest="county", help="the county")
 
     args = parser.parse_args()
-
-    if args.run:
+    if not args.run:
         if not args.state:
             print("[ERROR]: you need to provide a valid state")
             display_stop()
