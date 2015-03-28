@@ -307,8 +307,8 @@ def load_population_result(filename):
 
 def main():
     pass
-    # filename = "population-output/new_jersey/new_jersey_1IG3Y8_salem.csv"
-    # load_population_result(filename)
+    filename = "population-output/new_jersey/new_jersey_BHETWX_salem.csv"
+    load_population_result(filename)
 
 if __name__ == "__main__":
     main()

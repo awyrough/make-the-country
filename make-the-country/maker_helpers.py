@@ -88,10 +88,14 @@ def display_start(state, country, output):
                 "* we are finished.                                  \n" \
                 "----------------------------------------------------\n" 
 
-    message += "" \
-                "----------------------------------------------------\n" \
+    message += "\n" \
+                "****************************************************\n" \
+                "****************************************************\n" \
+                "****************************************************\n" \
                 "* Sit back, and I will log progress reports         \n" \
-                "----------------------------------------------------\n"
+                "****************************************************\n" \
+                "****************************************************\n" \
+                "****************************************************\n" \
 
     print(message)
 
@@ -148,32 +152,62 @@ def make_random_file_name(state, county, size=6, chars=string.ascii_uppercase + 
         file_str += ("_" + "_".join(county.lower().split(" ")))
     return file_str + ".csv"
 
+def display_end(state, county, output, filename):
+    """
+    Tell user it is done.
+    """
+    message = "" \
+                "----------------------------------------------------\n" \
+                "* SUMMARY                                           \n" \
+                "* You are done.                                     \n"
+
+    bigquery_message = "" \
+                "* The results are located in a table at:            \n" \
+                "* https://bigquery.cloud.google.com/table/banded-charmer-88421:population_output.%s \n" \
+                "----------------------------------------------------\n" 
+    
+    local_message = "" \
+                "* The results are located in a CSV file at          \n" \
+                "* population-output/%s/%s                           \n" \
+                "----------------------------------------------------\n" 
+
+    if output:
+        message+=local_message
+        print(message % (state, filename))
+    else:
+        message+=bigquery_message
+        print(message % (filename.split("/")[2]))
+    print("*******THANKS!********")
+
 def display_local_output(filename, output):
     """
     Tell user where the local output will be
     """
     message = "" \
                 "----------------------------------------------------\n" \
-                "* OUTPUT                                            \n" \
-                "* The results will be located in the State folder   \n" \
-                "* in the population-output directory                \n" \
-                "* The filename is %s                                \n"
+                "* OUTPUT                                            \n" 
 
     bigquery_message = "" \
                 "* We are sending this data to GoogleBigQuery.       \n" \
-                "* It will be stored temporarily locally, but will   \n" \
-                "* destroyed.                                        \n" \
+                "* It will be stored locally during execution,       \n" \
+                "* but will destroyed after. I will tell you where   \n" \
+                "* to find the table at the end...                   \n" \
                 "----------------------------------------------------\n"
     
     local_message = "" \
+                "* The results will be located in the State folder   \n" \
+                "* in the population-output directory                \n" \
+                "* The filename is                                   \n" \
+                "* %s                                                \n" \
                 "* I will remind you at the end...                   \n" \
                 "----------------------------------------------------\n"
 
     if output:
         message+=local_message
+        print(message % (filename)) 
     else:
         message+=bigquery_message
-    print(message % (filename)) 
+        print(message)
 
 def output_block(block, output=True, fileobj=None, db_table=None):
     """

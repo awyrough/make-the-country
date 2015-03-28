@@ -59,6 +59,9 @@ def loadTable(service, projectId, datasetId, targetTableId, sourceCSV, tableSche
           'load': {
             'sourceUris': [sourceCSV],
             'skipLeadingRows': skip,
+            'fieldDelimiter': ",",
+            'allowQuotedNewLines': True,
+            'maxBadRecords': 1, 
             'schema': {
               'fields': tableSchema
             },
@@ -77,11 +80,11 @@ def loadTable(service, projectId, datasetId, targetTableId, sourceCSV, tableSche
     while True:
       job = jobCollection.get(projectId=projectId,
                                  jobId=insertResponse['jobReference']['jobId']).execute()
-      print(job)
+      print(">>> Google says the upload is: " + job['status']['state'])
       if 'DONE' == job['status']['state']:
-          print 'Done Loading!'
+          if 'errors' in job['status']:
+            print(job['status']['errors'])
           return
-      print 'Waiting for loading to complete...'
       time.sleep(10)
 
     if 'errorResult' in job['status']:

@@ -1,13 +1,15 @@
 from __future__ import division
 
-import sys, argparse
+import sys, argparse, os
 
 from datetime import datetime
 
 from population_client import PopulationClient, unpack_bigquery_row, load_population_result
-from maker_helpers import confirm_execution, display_stop, display_start, display_county, display_local_output
+from maker_helpers import confirm_execution, display_stop, display_start, display_county, display_local_output, display_end
+
 from maker_helpers import fix_state_name, find_county, make_random_file_name
 from maker_helpers import output_block
+
 from population_builder import extract_income, build_census_block
 from gcs_client import load_data_to_big_query
 
@@ -82,14 +84,21 @@ def make_the_state(state, county, output=True, county_code=None):
             # END OF TRACT LOOP  
 
         # END OF COUNTY LOOP
+    file_open.close()
     log_progress(county_population, population_made_county, start)
     if not output:
         success = load_data_to_big_query(filename)
         if success == True:
+            print("----------------------------------------------------\n")
+            print("* Uploading to Google BigQuery:                     \n")
+            print("* Here are google status updates...                 \n")
+            print("----------------------------------------------------\n")
             load_population_result(filename)
+            os.remove(filename)
         else:
             print("There was an error loading the file to GCS: %s", success)
 
+    display_end(state, county, output, filename)
 
 
 def log_progress(total, processed, start):

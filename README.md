@@ -21,3 +21,8 @@ pip install -r requirements<br />
 
 create your secrets.py which has the correct Google API credentials<br />
 include your privatekey.pem file in the directory<br />
+
+### 4: Look at argument help
+
+cd make_the_state
+python make_the_state.py -h

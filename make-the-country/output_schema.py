@@ -25,11 +25,11 @@ population_output_schema = [
                             },
                             {
                                 "name": "LATITUDE",
-                                "type": "FLOAT"
+                                "type": "STRING"
                             },
                             {
                                 "name": "LONGITUDE",
-                                "type": "FLOAT"
+                                "type": "STRING"
                             },
                             {
                                 "name": "PID",
