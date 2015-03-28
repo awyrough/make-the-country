@@ -14,14 +14,18 @@ from apiclient.discovery import build
 from oauth2client.client import SignedJwtAssertionCredentials
 from googleapiclient.errors import HttpError
 # SECRET IMPORTS
-from secret import GOOGLE_PRIVATE_KEY_FILE, GOOGLE_DEVELOPER_PROJECT_NUMBER, GOOGLE_SERVICE_EMAIL
+from secret import GOOGLE_PRIVATE_KEY_FILE, GOOGLE_DEVELOPER_PROJECT_NUMBER, GOOGLE_SERVICE_EMAIL, GOOGLE_DEVELOPER_PROJECT_ID
+
+from upload_census_data.googlebigqueryclient import GoogleBigQueryClient, loadTable
+
+from output_schema import population_output_schema
 
 # LOGGING DECLARATION
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="%(levelname)s %(filename)s: %(message)s",
                     level=logging.WARNING)
 
-class GoogleBigQueryClient():
+class PopulationClient():
     """
     Google BigQuery API Client for GDELT access and processing.
     """
@@ -234,7 +238,7 @@ def get_demo_data(state, county, tract):
     This should return a row for every census block within the tract/county/state combo.
     This should return an identical number of rows for corresponding group/family queries.
     """
-    client = GoogleBigQueryClient()
+    client = PopulationClient()
     demo = client.get_tract_data("demo", county, tract, state)
     return demo
 
@@ -245,7 +249,7 @@ def get_group_data(state, county, tract):
     This should return a row for every census block within the tract/county/state combo.
     This should return an identical number of rows for corresponding demo/family queries.
     """
-    client = GoogleBigQueryClient()
+    client = PopulationClient()
     group = client.get_tract_data("group", county, tract, state)
     return group
 
@@ -256,7 +260,7 @@ def get_family_data(state, county, tract):
     This should return a row for every census block within the tract/county/state combo.
     This should return an identical number of rows for corresponding demo/group queries.
     """
-    client = GoogleBigQueryClient()
+    client = PopulationClient()
     family = client.get_tract_data("family", county, tract, state)
     return family
 
@@ -266,7 +270,7 @@ def get_income_data(state, county, tract):
 
     This should return 1 row/list of data.
     """
-    client = GoogleBigQueryClient()
+    client = PopulationClient()
     income = client.get_tract_data("income", county, tract, state)
     return income
 
@@ -274,7 +278,7 @@ def get_all_tracts(state, county):
     """
     Return all tracts within a county.
     """
-    client = GoogleBigQueryClient()
+    client = PopulationClient()
     tracts = client.get_all_tracts_in_county(state, county)
     return tracts
 
@@ -282,9 +286,29 @@ def get_all_counties(state):
     """
     Return all counties within a state.
     """
-    client = GoogleBigQueryClient()
+    client = PopulationClient()
     counties = client.get_counties_in_state(state)
     return counties
 
 def unpack_bigquery_row(data):
     return [x["v"] for x in data["f"]]
+
+def load_population_result(filename):
+    """
+    Create table in population_output dataset for the name perscibed by filename.
+    """
+    actual_name = filename.split("/")[2]
+    state = filename.split("/")[1]
+    gs_location = "gs://population-output/" + state + "/" + actual_name
+    dataset = "population_output"
+    table = actual_name.split(".")[0]
+    client = GoogleBigQueryClient()
+    loadTable(client.client, GOOGLE_DEVELOPER_PROJECT_ID, dataset, table, gs_location, population_output_schema)
+
+def main():
+    pass
+    # filename = "population-output/new_jersey/new_jersey_1IG3Y8_salem.csv"
+    # load_population_result(filename)
+
+if __name__ == "__main__":
+    main()

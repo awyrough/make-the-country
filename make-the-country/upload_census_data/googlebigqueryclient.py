@@ -47,7 +47,7 @@ class GoogleBigQueryClient():
         for d in response['datasets']:
             print("%s\n" % d['id'])
 
-def loadTable(service, projectId, datasetId, targetTableId, sourceCSV, tableSchema):
+def loadTable(service, projectId, datasetId, targetTableId, sourceCSV, tableSchema, skip=0):
   """
   Load table from Google Cloud Storage into Big Query.
   """
@@ -58,7 +58,7 @@ def loadTable(service, projectId, datasetId, targetTableId, sourceCSV, tableSche
       'configuration': {
           'load': {
             'sourceUris': [sourceCSV],
-            'skipLeadingRows': 1,
+            'skipLeadingRows': skip,
             'schema': {
               'fields': tableSchema
             },
@@ -93,11 +93,11 @@ def loadTable(service, projectId, datasetId, targetTableId, sourceCSV, tableSche
 
 def main():
   client = GoogleBigQueryClient()
-  # client.test_access()
+  client.test_access()
   # loadTable(client.client, GOOGLE_DEVELOPER_PROJECT_ID, "new_jersey", "new_jersey_demo", "gs://demographic-data/NewJerseyQuery.csv", demo_schema)
   # loadTable(client.client, GOOGLE_DEVELOPER_PROJECT_ID, "new_jersey", "new_jersey_group", "gs://groupquarter-data/NewJerseyGQuery.txt", group_schema)
   # loadTable(client.client, GOOGLE_DEVELOPER_PROJECT_ID, "new_jersey", "new_jersey_family", "gs://family-data/NewJerseyFQuery.txt", family_schema)
-  loadTable(client.client, GOOGLE_DEVELOPER_PROJECT_ID, "new_jersey", "new_jersey_income", "gs://income-data/NewJerseyIncome.csv", income_schema)
+  # loadTable(client.client, GOOGLE_DEVELOPER_PROJECT_ID, "new_jersey", "new_jersey_income", "gs://income-data/NewJerseyIncome.csv", income_schema)
 
 if __name__ == "__main__":
     main()

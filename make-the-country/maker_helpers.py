@@ -143,31 +143,42 @@ def make_random_file_name(state, county, size=6, chars=string.ascii_uppercase + 
     Make and return random file name for output.
     "output/state + RANDOM STRING + COUNTY
     """
-    file_str = "output/" + state + "_" + ''.join(random.choice(chars) for _ in range(size))
+    file_str = "population-output/" + state + "/" + state + "_" + ''.join(random.choice(chars) for _ in range(size))
     if county:
         file_str += ("_" + "_".join(county.lower().split(" ")))
     return file_str + ".csv"
 
-def display_local_output(filename):
+def display_local_output(filename, output):
     """
     Tell user where the local output will be
     """
     message = "" \
                 "----------------------------------------------------\n" \
                 "* OUTPUT                                            \n" \
-                "* The results will be located in the Output folder  \n" \
-                "* The filename is %s                                \n" \
+                "* The results will be located in the State folder   \n" \
+                "* in the population-output directory                \n" \
+                "* The filename is %s                                \n"
+
+    bigquery_message = "" \
+                "* We are sending this data to GoogleBigQuery.       \n" \
+                "* It will be stored temporarily locally, but will   \n" \
+                "* destroyed.                                        \n" \
+                "----------------------------------------------------\n"
+    
+    local_message = "" \
                 "* I will remind you at the end...                   \n" \
-                "----------------------------------------------------\n" % (filename)
-    print(message) 
+                "----------------------------------------------------\n"
+
+    if output:
+        message+=local_message
+    else:
+        message+=bigquery_message
+    print(message % (filename)) 
 
 def output_block(block, output=True, fileobj=None, db_table=None):
     """
     Write output
     """
-    if output:
-        open_file = csv.writer(fileobj, delimiter=",")
-        for b in block:
-            open_file.writerow(b)
-    else:
-        print("no output happening")
+    open_file = csv.writer(fileobj, delimiter=",")
+    for b in block:
+        open_file.writerow(b)

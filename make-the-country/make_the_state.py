@@ -4,11 +4,12 @@ import sys, argparse
 
 from datetime import datetime
 
-from population_client import GoogleBigQueryClient, unpack_bigquery_row
+from population_client import PopulationClient, unpack_bigquery_row, load_population_result
 from maker_helpers import confirm_execution, display_stop, display_start, display_county, display_local_output
 from maker_helpers import fix_state_name, find_county, make_random_file_name
 from maker_helpers import output_block
 from population_builder import extract_income, build_census_block
+from gcs_client import load_data_to_big_query
 
 def make_the_state(state, county, output=True, county_code=None):
     """
@@ -23,16 +24,14 @@ def make_the_state(state, county, output=True, county_code=None):
     if not confirm: display_stop(); exit()
     display_start(state, county, output)
     # not ready for output to bigquery
-    if not output: print("No BigQuery Output supported yet"); display_stop(); exit()
-    session = GoogleBigQueryClient()
+    session = PopulationClient()
 
     # convert pretty state name to file friendly state name
     internal_state = fix_state_name(state)
     # make the output
-    if output:
-        filename = make_random_file_name(internal_state, county)
-        display_local_output(filename)
-        file_open = open(filename, "w+")
+    filename = make_random_file_name(internal_state, county)
+    display_local_output(filename, output)
+    file_open = open(filename, "w+")
 
     # Get all the tracts for the state/county entity
     if not county_code:
@@ -41,7 +40,9 @@ def make_the_state(state, county, output=True, county_code=None):
         counties = [county_code]
 
     start = datetime.now()
-    print("started at " + str(datetime.now()))
+    print("----------------------------------------------------\n")
+    print("started at " + str(datetime.now()) + "\n")
+    print("----------------------------------------------------\n")
 
     # declare id variables
     house_count = 0
@@ -82,6 +83,14 @@ def make_the_state(state, county, output=True, county_code=None):
 
         # END OF COUNTY LOOP
     log_progress(county_population, population_made_county, start)
+    if not output:
+        success = load_data_to_big_query(filename)
+        if success == True:
+            load_population_result(filename)
+        else:
+            print("There was an error loading the file to GCS: %s", success)
+
+
 
 def log_progress(total, processed, start):
     """
