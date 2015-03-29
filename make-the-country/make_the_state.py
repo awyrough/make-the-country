@@ -80,12 +80,11 @@ def make_the_state(state, county, output=True, county_code=None):
                 if (population_made_county > previous_log):
                     log_progress(county_population, population_made_county, start)
                     previous_log += 100000
-            
             # END OF TRACT LOOP  
-
+        log_progress(county_population, population_made_county, start)
         # END OF COUNTY LOOP
-    file_open.close()
     log_progress(county_population, population_made_county, start)
+    file_open.close()
     if not output:
         success = load_data_to_big_query(filename)
         if success == True:
@@ -111,8 +110,8 @@ def log_progress(total, processed, start):
     message = "" \
                 "----------------------------------------------------\n" \
                 "* PROGRESS REPORT:                                  \n" \
-                "* You have this left %0.2f%% to go...               \n" \
-                "* You have finished this much %0.2f%% so far...     \n" \
+                "* You have %0f%% to go within this county.          \n" \
+                "* You have finished %0f%% so far...                 \n" \
                 "* It has taken this long: %s                        \n" \
                 "----------------------------------------------------\n" % (percent_to_go, percent_done, str(datetime.now() - start))
     print(message)

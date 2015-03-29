@@ -119,7 +119,7 @@ def display_county(session, state, county):
     message = "" \
                 "----------------------------------------------------\n" \
                 "* Beginning work on county: %s                      \n" \
-                "* There are %d residents in the state.              \n" \
+                "* There are %d residents.                           \n" \
                 "----------------------------------------------------\n" % (county, county_pop)
     print(message)
     return county_pop
